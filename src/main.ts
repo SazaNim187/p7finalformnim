@@ -3,7 +3,9 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors(); // allow frontend to call backend
-  await app.listen(process.env.PORT ?? 3000);
+  app.enableCors({
+    origin: ['https:nextp7finalformnim.vercel.app'], // or '*' for testing
+  });
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
