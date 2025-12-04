@@ -6,37 +6,36 @@ import * as path from 'path';
 
 @Injectable()
 export class UsersService {
-  private file = path.join(__dirname, 'users.json');
   private users: User[] = [];
+  private idCount = 1;
+  private filePath = path.join(__dirname, 'users.json');
 
   constructor() {
-    this.load();
-  }
-
-  private load() {
-    if (fs.existsSync(this.file)) {
-      this.users = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-    } else {
-      this.users = [];
+    // Load users from file if exists
+    if (fs.existsSync(this.filePath)) {
+      const data = fs.readFileSync(this.filePath, 'utf-8');
+      this.users = JSON.parse(data);
+      // Make sure idCount continues correctly
+      this.idCount = this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1;
     }
   }
 
-  private save() {
-    fs.writeFileSync(this.file, JSON.stringify(this.users, null, 2));
+  private saveToFile() {
+    fs.writeFileSync(this.filePath, JSON.stringify(this.users, null, 2));
   }
 
   async create(username: string, email: string, password: string) {
     const hashed = await bcrypt.hash(password, 10);
 
     const newUser: User = {
-      id: Date.now(),
+      id: this.idCount++,
       username,
       email,
       password: hashed,
     };
 
     this.users.push(newUser);
-    this.save();
+    this.saveToFile(); // persist to JSON file
     return newUser;
   }
 
