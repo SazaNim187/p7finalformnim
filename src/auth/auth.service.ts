@@ -14,7 +14,10 @@ export class AuthService {
     const existing = await this.users.findByEmail(email);
     if (existing) throw new UnauthorizedException('Email already used');
 
-    return this.users.create(username, email, password);
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await this.users.create(username, email, hashed);
+
+    return user;
   }
 
   async login(email: string, password: string) {
@@ -24,8 +27,8 @@ export class AuthService {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    const token = await this.jwt.signAsync({ sub: user.id });
+    const token = await this.jwt.signAsync({ sub: user.id, email: user.email, username: user.username });
 
-    return { token };
+    return { access_token: token }; // matches frontend expectation
   }
 }
