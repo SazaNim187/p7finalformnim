@@ -12,23 +12,31 @@ export class AuthService {
 
   async register(username: string, email: string, password: string) {
     const existing = await this.users.findByEmail(email);
+    console.log('Register attempt for email:', email, 'Existing user:', existing);
+
     if (existing) throw new UnauthorizedException('Email already used');
 
-    const hashed = await bcrypt.hash(password, 10);
-    const user = await this.users.create(username, email, hashed);
+    const newUser = await this.users.create(username, email, password);
+    console.log('New user created:', newUser);
 
-    return user;
+    return newUser;
   }
 
   async login(email: string, password: string) {
     const user = await this.users.findByEmail(email);
+    console.log('Login attempt for email:', email);
+    console.log('User found:', user);
+
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const ok = await bcrypt.compare(password, user.password);
+    console.log('Password match:', ok);
+
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    const token = await this.jwt.signAsync({ sub: user.id, email: user.email, username: user.username });
+    const token = await this.jwt.signAsync({ sub: user.id });
+    console.log('JWT token generated:', token);
 
-    return { access_token: token }; // matches frontend expectation
+    return { token };
   }
 }
